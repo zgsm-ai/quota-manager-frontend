@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quota-manager-frontend-config
+  namespace: shenma
+data:
+  # Frontend environment configuration
+  app.config.js: |
+    // Production environment configuration
+    window.APP_CONFIG = {
+      // API configuration
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        enableMock: false
+      },
+
+      // Application configuration
+      app: {
+        name: 'Quota Manager',
+        version: '1.0.0',
+        description: 'AI Quota Management System',
+        author: 'ShenMA AI Team'
+      },
+
+      // Feature configuration
+      features: {
+        userAudit: true,
+        strategyManagement: true,
+        settings: true,
+        realTimeMonitoring: true
+      },
+
+      // Theme configuration
+      theme: {
+        primaryColor: '#409EFF',
+        layout: 'classic'
+      }
+    };
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quota-manager-frontend
+  namespace: shenma
+  labels:
+    app: quota-manager-frontend
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: quota-manager-frontend
+  template:
+    metadata:
+      labels:
+        app: quota-manager-frontend
+        tier: frontend
+    spec:
+      containers:
+      - name: quota-manager-frontend
+        image: crpi-j8wrd0nl8l9v42wd.cn-shenzhen.personal.cr.aliyuncs.com/shenma-ai/quota-manager-frontend:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        env:
+          - name: TZ
+            value: Asia/Shanghai
+          - name: NODE_ENV
+            value: production
+          # Note: VITE_ prefix is required for Vite to expose variable to client-side code
+          - name: VITE_API_BASE_URL
+            value: "http://quota-manager-svc:8080"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: "100m"
+            memory: 128Mi
+          limits:
+            cpu: "500m"
+            memory: 512Mi
+        volumeMounts:
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+        - name: frontend-config
+          mountPath: /usr/share/nginx/html/config
+          readOnly: true
+      volumes:
+        - name: nginx-logs
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: frontend-config
+          configMap:
+            name: quota-manager-frontend-config
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quota-manager-frontend-svc
+  namespace: shenma
+  labels:
+    app: quota-manager-frontend
+    tier: frontend
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: quota-manager-frontend
+
+---
+# HorizontalPodAutoscaler configuration (optional, auto-scaling)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: quota-manager-frontend-hpa
+  namespace: shenma
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: quota-manager-frontend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60

@@ -1,0 +1,40 @@
+@import './base.css';
+
+/* 移除限制性样式，让应用充满整个窗口 */
+#app {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  overflow: hidden;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+/* 移除不适合管理面板的网格布局 */
+@media (min-width: 1024px) {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  #app {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+}

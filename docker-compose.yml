@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  quota-manager-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quota-manager-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - TZ=Asia/Shanghai
+      - NODE_ENV=production
+      # Note: VITE_ prefix is required for Vite to expose variable to client-side code
+      - VITE_API_BASE_URL=http://quota-manager-backend:8080
+    volumes:
+      # Mount log directory (optional)
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - quota-manager-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=quota-manager-frontend"
+      - "description=Quota Manager Frontend Service"
+
+  # Proxy configuration for backend service (if needed to run complete system locally)
+  quota-manager-backend:
+    image: crpi-j8wrd0nl8l9v42wd.cn-shenzhen.personal.cr.aliyuncs.com/shenma-ai/quota-manager:1.0.0
+    container_name: quota-manager-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - INDEX_NODE=0
+    networks:
+      - quota-manager-network
+    restart: unless-stopped
+    profiles:
+      - full-stack  # Use profile to control whether to start backend
+
+  # Nginx reverse proxy (optional, for unified entry)
+  nginx-proxy:
+    image: nginx:1.25-alpine
+    container_name: quota-manager-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - quota-manager-frontend
+    networks:
+      - quota-manager-network
+    restart: unless-stopped
+    profiles:
+      - proxy
+
+networks:
+  quota-manager-network:
+    driver: bridge
+    name: quota-manager-net
+
+volumes:
+  nginx-logs:
+    driver: local

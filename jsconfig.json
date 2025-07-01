@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@config": ["./app.config.js"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}
