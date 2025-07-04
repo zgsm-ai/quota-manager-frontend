@@ -174,7 +174,7 @@
               <el-radio-button value="advanced">Advanced (Cron)</el-radio-button>
             </el-radio-group>
 
-            <!-- 预设选项 -->
+            <!-- 预设选项 - 更新为6字段格式 -->
             <div v-if="scheduleMode === 'preset'" class="preset-options">
               <el-select
                 v-model="selectedPreset"
@@ -182,23 +182,25 @@
                 placeholder="Select a common schedule"
                 style="width: 100%"
               >
-                <el-option label="Every minute" value="*/1 * * * *" />
-                <el-option label="Every 5 minutes" value="*/5 * * * *" />
-                <el-option label="Every 10 minutes" value="*/10 * * * *" />
-                <el-option label="Every 15 minutes" value="*/15 * * * *" />
-                <el-option label="Every 30 minutes" value="*/30 * * * *" />
-                <el-option label="Every hour" value="0 * * * *" />
-                <el-option label="Every 2 hours" value="0 */2 * * *" />
-                <el-option label="Every 6 hours" value="0 */6 * * *" />
-                <el-option label="Daily at midnight" value="0 0 * * *" />
-                <el-option label="Daily at 6:00 AM" value="0 6 * * *" />
-                <el-option label="Daily at 9:00 AM" value="0 9 * * *" />
-                <el-option label="Daily at 12:00 PM" value="0 12 * * *" />
-                <el-option label="Daily at 6:00 PM" value="0 18 * * *" />
-                <el-option label="Weekly on Monday 9:00 AM" value="0 9 * * 1" />
-                <el-option label="Weekly on Friday 5:00 PM" value="0 17 * * 5" />
-                <el-option label="Monthly on 1st at 9:00 AM" value="0 9 1 * *" />
-                <el-option label="Monthly on 15th at 12:00 PM" value="0 12 15 * *" />
+                <el-option label="Every 10 seconds" value="*/10 * * * * *" />
+                <el-option label="Every 30 seconds" value="*/30 * * * * *" />
+                <el-option label="Every minute" value="0 */1 * * * *" />
+                <el-option label="Every 5 minutes" value="0 */5 * * * *" />
+                <el-option label="Every 10 minutes" value="0 */10 * * * *" />
+                <el-option label="Every 15 minutes" value="0 */15 * * * *" />
+                <el-option label="Every 30 minutes" value="0 */30 * * * *" />
+                <el-option label="Every hour" value="0 0 * * * *" />
+                <el-option label="Every 2 hours" value="0 0 */2 * * *" />
+                <el-option label="Every 6 hours" value="0 0 */6 * * *" />
+                <el-option label="Daily at midnight" value="0 0 0 * * *" />
+                <el-option label="Daily at 6:00 AM" value="0 0 6 * * *" />
+                <el-option label="Daily at 9:00 AM" value="0 0 9 * * *" />
+                <el-option label="Daily at 12:00 PM" value="0 0 12 * * *" />
+                <el-option label="Daily at 6:00 PM" value="0 0 18 * * *" />
+                <el-option label="Weekly on Monday 9:00 AM" value="0 0 9 * * 1" />
+                <el-option label="Weekly on Friday 5:00 PM" value="0 0 17 * * 5" />
+                <el-option label="Monthly on 1st at 9:00 AM" value="0 0 9 1 * *" />
+                <el-option label="Monthly on 15th at 12:00 PM" value="0 0 12 15 * *" />
               </el-select>
             </div>
 
@@ -207,6 +209,7 @@
               <div class="builder-row">
                 <label>Frequency:</label>
                 <el-select v-model="customSchedule.frequency" @change="updateCustomCron" style="width: 150px">
+                  <el-option label="Every second" value="second" />
                   <el-option label="Every minute" value="minute" />
                   <el-option label="Hourly" value="hour" />
                   <el-option label="Daily" value="day" />
@@ -215,17 +218,35 @@
                 </el-select>
               </div>
 
-              <div v-if="customSchedule.frequency === 'minute'" class="builder-row">
+              <div v-if="customSchedule.frequency === 'second'" class="builder-row">
                 <label>Every:</label>
-                <el-input-number v-model="customSchedule.minuteInterval" :min="1" :max="59" @change="updateCustomCron" style="width: 100px" />
-                <span>minute(s)</span>
+                <el-input-number v-model="customSchedule.secondInterval" :min="1" :max="59" @change="updateCustomCron" style="width: 100px" />
+                <span>second(s)</span>
+              </div>
+
+              <div v-if="customSchedule.frequency === 'minute'">
+                <div class="builder-row">
+                  <label>Every:</label>
+                  <el-input-number v-model="customSchedule.minuteInterval" :min="1" :max="59" @change="updateCustomCron" style="width: 100px" />
+                  <span>minute(s)</span>
+                </div>
+                <div class="builder-row builder-sub-row">
+                  <label>At second:</label>
+                  <el-input-number v-model="customSchedule.second" :min="0" :max="59" @change="updateCustomCron" style="width: 80px" />
+                </div>
               </div>
 
               <div v-if="customSchedule.frequency === 'hour'" class="builder-row">
                 <label>Every:</label>
                 <el-input-number v-model="customSchedule.hourInterval" :min="1" :max="23" @change="updateCustomCron" style="width: 100px" />
-                <span>hour(s) at minute:</span>
-                <el-input-number v-model="customSchedule.minute" :min="0" :max="59" @change="updateCustomCron" style="width: 100px" />
+                <span>hour(s)</span>
+                <div class="time-setting">
+                  <span>at</span>
+                  <el-input-number v-model="customSchedule.minute" :min="0" :max="59" @change="updateCustomCron" style="width: 70px" />
+                  <span>min</span>
+                  <el-input-number v-model="customSchedule.second" :min="0" :max="59" @change="updateCustomCron" style="width: 70px" />
+                  <span>sec</span>
+                </div>
               </div>
 
               <div v-if="['day', 'week', 'month'].includes(customSchedule.frequency)" class="builder-row">
@@ -233,7 +254,7 @@
                 <el-time-picker
                   v-model="customSchedule.time"
                   @change="updateCustomCron"
-                  format="HH:mm"
+                  format="HH:mm:ss"
                   placeholder="Select time"
                   style="width: 150px"
                 />
@@ -258,24 +279,26 @@
               </div>
             </div>
 
-            <!-- 高级模式（直接输入 Cron） -->
+            <!-- 高级模式（直接输入 Cron） - 更新为6字段格式 -->
             <div v-if="scheduleMode === 'advanced'" class="advanced-mode">
               <el-input
                 v-model="form.periodic_expr"
-                placeholder="e.g., 0 9 * * 1-5 (weekdays at 9:00 AM)"
+                placeholder="e.g., 0 0 9 * * 1-5 (weekdays at 9:00:00 AM)"
                 style="margin-bottom: 8px"
               />
               <div class="cron-help">
-                <span>Format: minute hour day month weekday</span>
+                <span>Format: second minute hour day month weekday</span>
                 <el-button type="text" @click="showCronHelp = !showCronHelp">{{ showCronHelp ? 'Hide' : 'Show' }} Help</el-button>
               </div>
               <div v-if="showCronHelp" class="cron-examples">
                 <p><strong>Examples:</strong></p>
                 <ul>
-                  <li><code>*/5 * * * *</code> - Every 5 minutes</li>
-                  <li><code>0 9 * * 1-5</code> - Weekdays at 9:00 AM</li>
-                  <li><code>0 0 1 * *</code> - First day of every month at midnight</li>
-                  <li><code>0 */2 * * *</code> - Every 2 hours</li>
+                  <li><code>*/10 * * * * *</code> - Every 10 seconds</li>
+                  <li><code>0 */5 * * * *</code> - Every 5 minutes</li>
+                  <li><code>0 0 9 * * 1-5</code> - Weekdays at 9:00:00 AM</li>
+                  <li><code>0 0 0 1 * *</code> - First day of every month at midnight</li>
+                  <li><code>0 0 */2 * * *</code> - Every 2 hours</li>
+                  <li><code>*/30 * * * * *</code> - Every 30 seconds</li>
                 </ul>
               </div>
             </div>
@@ -333,16 +356,18 @@ const searchText = ref('')
 const statusFilter = ref('')
 const typeFilter = ref('')
 
-// 调度设置相关
+// 调度设置相关 - 更新为支持6字段
 const scheduleMode = ref('preset')
 const selectedPreset = ref('')
 const showCronHelp = ref(false)
 const customSchedule = reactive({
   frequency: 'day',
+  secondInterval: 10,
   minuteInterval: 5,
   hourInterval: 1,
+  second: 0,
   minute: 0,
-  time: new Date(2024, 0, 1, 9, 0), // 默认 9:00 AM
+  time: new Date(2024, 0, 1, 9, 0, 0), // 默认 9:00:00 AM
   weekDay: 1, // 周一
   monthDay: 1
 })
@@ -447,55 +472,62 @@ const editStrategy = (strategy) => {
   isEditing.value = true
   Object.assign(form, strategy)
 
-  // 根据现有的 cron 表达式智能选择模式
+  // 根据现有的 cron 表达式智能选择模式 - 更新为6字段支持
   if (strategy.periodic_expr) {
-    // 检查是否匹配预设选项
+    // 检查是否匹配预设选项 - 更新为6字段预设
     const presetOptions = [
-      '*/1 * * * *', '*/5 * * * *', '*/10 * * * *', '*/15 * * * *', '*/30 * * * *',
-      '0 * * * *', '0 */2 * * *', '0 */6 * * *',
-      '0 0 * * *', '0 6 * * *', '0 9 * * *', '0 12 * * *', '0 18 * * *',
-      '0 9 * * 1', '0 17 * * 5', '0 9 1 * *', '0 12 15 * *'
+      '*/10 * * * * *', '*/30 * * * * *', '0 */1 * * * *', '0 */5 * * * *', '0 */10 * * * *',
+      '0 */15 * * * *', '0 */30 * * * *', '0 0 * * * *', '0 0 */2 * * *', '0 0 */6 * * *',
+      '0 0 0 * * *', '0 0 6 * * *', '0 0 9 * * *', '0 0 12 * * *', '0 0 18 * * *',
+      '0 0 9 * * 1', '0 0 17 * * 5', '0 0 9 1 * *', '0 0 12 15 * *'
     ]
 
     if (presetOptions.includes(strategy.periodic_expr)) {
       scheduleMode.value = 'preset'
       selectedPreset.value = strategy.periodic_expr
     } else {
-      // 尝试解析为自定义设置
+      // 尝试解析为自定义设置 - 更新为6字段解析
       const cronParts = strategy.periodic_expr.split(' ')
-      if (cronParts.length === 5) {
-        const [minute, hour, day, month, weekday] = cronParts
+      if (cronParts.length === 6) {
+        const [second, minute, hour, day, month, weekday] = cronParts
         let parsed = false
 
         // 尝试解析为自定义模式
-        if (minute.startsWith('*/') && hour === '*' && day === '*' && month === '*' && weekday === '*') {
+        if (second.startsWith('*/') && minute === '*' && hour === '*' && day === '*' && month === '*' && weekday === '*') {
+          scheduleMode.value = 'custom'
+          customSchedule.frequency = 'second'
+          customSchedule.secondInterval = parseInt(second.substring(2))
+          parsed = true
+        } else if (second === '0' && minute.startsWith('*/') && hour === '*' && day === '*' && month === '*' && weekday === '*') {
           scheduleMode.value = 'custom'
           customSchedule.frequency = 'minute'
           customSchedule.minuteInterval = parseInt(minute.substring(2))
+          customSchedule.second = parseInt(second) || 0
           parsed = true
-        } else if (hour.startsWith('*/') && day === '*' && month === '*' && weekday === '*') {
+        } else if (second !== '*' && minute !== '*' && hour.startsWith('*/') && day === '*' && month === '*' && weekday === '*') {
           scheduleMode.value = 'custom'
           customSchedule.frequency = 'hour'
           customSchedule.hourInterval = parseInt(hour.substring(2))
           customSchedule.minute = parseInt(minute) || 0
+          customSchedule.second = parseInt(second) || 0
           parsed = true
-        } else if (!hour.includes('*') && !minute.includes('*') && day === '*' && month === '*' && weekday === '*') {
+        } else if (!hour.includes('*') && !minute.includes('*') && !second.includes('*') && day === '*' && month === '*' && weekday === '*') {
           scheduleMode.value = 'custom'
           customSchedule.frequency = 'day'
-          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0)
+          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0, parseInt(second) || 0)
           customSchedule.time = time
           parsed = true
-        } else if (!hour.includes('*') && !minute.includes('*') && day === '*' && month === '*' && !weekday.includes('*')) {
+        } else if (!hour.includes('*') && !minute.includes('*') && !second.includes('*') && day === '*' && month === '*' && !weekday.includes('*')) {
           scheduleMode.value = 'custom'
           customSchedule.frequency = 'week'
-          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0)
+          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0, parseInt(second) || 0)
           customSchedule.time = time
           customSchedule.weekDay = parseInt(weekday) || 0
           parsed = true
-        } else if (!hour.includes('*') && !minute.includes('*') && !day.includes('*') && month === '*' && weekday === '*') {
+        } else if (!hour.includes('*') && !minute.includes('*') && !second.includes('*') && !day.includes('*') && month === '*' && weekday === '*') {
           scheduleMode.value = 'custom'
           customSchedule.frequency = 'month'
-          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0)
+          const time = new Date(2024, 0, 1, parseInt(hour) || 0, parseInt(minute) || 0, parseInt(second) || 0)
           customSchedule.time = time
           customSchedule.monthDay = parseInt(day) || 1
           parsed = true
@@ -597,16 +629,18 @@ const resetForm = () => {
     status: true
   })
 
-  // 重置调度设置
+  // 重置调度设置 - 更新为6字段支持
   scheduleMode.value = 'preset'
   selectedPreset.value = ''
   showCronHelp.value = false
   Object.assign(customSchedule, {
     frequency: 'day',
+    secondInterval: 10,
     minuteInterval: 5,
     hourInterval: 1,
+    second: 0,
     minute: 0,
-    time: new Date(2024, 0, 1, 9, 0),
+    time: new Date(2024, 0, 1, 9, 0, 0),
     weekDay: 1,
     monthDay: 1
   })
@@ -636,30 +670,37 @@ const updateCustomCron = () => {
   let cron = ''
 
   switch (customSchedule.frequency) {
+    case 'second':
+      cron = `*/${customSchedule.secondInterval} * * * * *`
+      break
+
     case 'minute':
-      cron = `*/${customSchedule.minuteInterval} * * * *`
+      cron = `${customSchedule.second} */${customSchedule.minuteInterval} * * * *`
       break
 
     case 'hour':
-      cron = `${customSchedule.minute} */${customSchedule.hourInterval} * * *`
+      cron = `${customSchedule.second} ${customSchedule.minute} */${customSchedule.hourInterval} * * *`
       break
 
     case 'day':
       const dayHour = customSchedule.time.getHours()
       const dayMinute = customSchedule.time.getMinutes()
-      cron = `${dayMinute} ${dayHour} * * *`
+      const daySecond = customSchedule.time.getSeconds()
+      cron = `${daySecond} ${dayMinute} ${dayHour} * * *`
       break
 
     case 'week':
       const weekHour = customSchedule.time.getHours()
       const weekMinute = customSchedule.time.getMinutes()
-      cron = `${weekMinute} ${weekHour} * * ${customSchedule.weekDay}`
+      const weekSecond = customSchedule.time.getSeconds()
+      cron = `${weekSecond} ${weekMinute} ${weekHour} * * ${customSchedule.weekDay}`
       break
 
     case 'month':
       const monthHour = customSchedule.time.getHours()
       const monthMinute = customSchedule.time.getMinutes()
-      cron = `${monthMinute} ${monthHour} ${customSchedule.monthDay} * *`
+      const monthSecond = customSchedule.time.getSeconds()
+      cron = `${monthSecond} ${monthMinute} ${monthHour} ${customSchedule.monthDay} * *`
       break
   }
 
@@ -670,22 +711,33 @@ const getNextExecutionTime = () => {
   if (!form.periodic_expr) return 'Invalid expression'
 
   try {
-    // 简单的下次执行时间计算（这里可以使用更精确的 cron 解析库）
+    // 简单的下次执行时间计算 - 更新为6字段支持
     const now = new Date()
     const cronParts = form.periodic_expr.split(' ')
 
-    if (cronParts.length !== 5) return 'Invalid cron format'
+    if (cronParts.length !== 6) return 'Invalid cron format (requires 6 fields: second minute hour day month weekday)'
 
     // 简化版本：只处理一些常见情况
-    const [minute, hour, day, month, weekday] = cronParts
+    const [second, minute, hour, day, month, weekday] = cronParts
+
+    if (second.startsWith('*/')) {
+      const interval = parseInt(second.substring(2))
+      const nextSecond = Math.ceil(now.getSeconds() / interval) * interval
+      const nextTime = new Date(now)
+      nextTime.setSeconds(nextSecond, 0)
+      if (nextTime <= now) {
+        nextTime.setMinutes(nextTime.getMinutes() + 1, 0, 0)
+      }
+      return nextTime.toLocaleString()
+    }
 
     if (minute.startsWith('*/')) {
       const interval = parseInt(minute.substring(2))
       const nextMinute = Math.ceil(now.getMinutes() / interval) * interval
       const nextTime = new Date(now)
-      nextTime.setMinutes(nextMinute, 0, 0)
+      nextTime.setMinutes(nextMinute, parseInt(second) || 0, 0)
       if (nextTime <= now) {
-        nextTime.setHours(nextTime.getHours() + 1, 0, 0, 0)
+        nextTime.setHours(nextTime.getHours() + 1, 0, parseInt(second) || 0, 0)
       }
       return nextTime.toLocaleString()
     }
@@ -694,17 +746,17 @@ const getNextExecutionTime = () => {
       const interval = parseInt(hour.substring(2))
       const nextHour = Math.ceil(now.getHours() / interval) * interval
       const nextTime = new Date(now)
-      nextTime.setHours(nextHour, parseInt(minute) || 0, 0, 0)
+      nextTime.setHours(nextHour, parseInt(minute) || 0, parseInt(second) || 0, 0)
       if (nextTime <= now) {
         nextTime.setDate(nextTime.getDate() + 1)
-        nextTime.setHours(0, parseInt(minute) || 0, 0, 0)
+        nextTime.setHours(0, parseInt(minute) || 0, parseInt(second) || 0, 0)
       }
       return nextTime.toLocaleString()
     }
 
     // 对于固定时间，计算下一次执行
     const nextTime = new Date(now)
-    nextTime.setHours(parseInt(hour) || 0, parseInt(minute) || 0, 0, 0)
+    nextTime.setHours(parseInt(hour) || 0, parseInt(minute) || 0, parseInt(second) || 0, 0)
 
     if (nextTime <= now) {
       nextTime.setDate(nextTime.getDate() + 1)
@@ -858,7 +910,7 @@ onMounted(() => {
 }
 
 .builder-row label {
-  min-width: 80px;
+  min-width: 100px;
   font-weight: 500;
   color: #606266;
 }
@@ -866,6 +918,17 @@ onMounted(() => {
 .builder-row span {
   color: #909399;
   font-size: 14px;
+}
+
+.builder-sub-row {
+  margin-left: 20px;
+  margin-top: 8px;
+}
+
+.time-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .advanced-mode {
