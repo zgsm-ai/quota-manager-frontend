@@ -73,13 +73,21 @@
             <el-switch
               v-model="scope.row.status"
               @change="toggleStrategyStatus(scope.row)"
-              :loading="scope.row.updating"
+              :loading="loadingStates[scope.row.id]"
             />
           </template>
         </el-table-column>
         <el-table-column prop="create_time" label="Created" width="180">
           <template #default="scope">
             {{ formatDate(scope.row.create_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Next Execution" width="200">
+          <template #default="scope">
+            <div v-if="scope.row.type === 'periodic' && scope.row.periodic_expr" class="next-execution-cell">
+              <span class="execution-time">{{ calculateNextExecutionTime(scope.row.periodic_expr) }}</span>
+            </div>
+            <span v-else class="not-applicable">-</span>
           </template>
         </el-table-column>
         <el-table-column label="Actions" width="280" fixed="right">
@@ -368,6 +376,7 @@ const isEditing = ref(false)
 const searchText = ref('')
 const statusFilter = ref('')
 const typeFilter = ref('')
+const loadingStates = ref({})
 
 // 调度设置相关 - 更新为支持6字段
 const scheduleMode = ref('preset')
@@ -589,7 +598,7 @@ const deleteStrategy = async (strategy) => {
 
 const toggleStrategyStatus = async (strategy) => {
   try {
-    strategy.updating = true
+    loadingStates.value[strategy.id] = true
     if (strategy.status) {
       await strategyApi.enableStrategy(strategy.id)
     } else {
@@ -601,7 +610,7 @@ const toggleStrategyStatus = async (strategy) => {
     strategy.status = !strategy.status
     ElMessage.error('Failed to update strategy status')
   } finally {
-    strategy.updating = false
+    loadingStates.value[strategy.id] = false
   }
 }
 
@@ -720,15 +729,15 @@ const updateCustomCron = () => {
   form.periodic_expr = cron
 }
 
-const getNextExecutionTime = () => {
-  if (!form.periodic_expr) return 'Invalid expression'
+const calculateNextExecutionTime = (cronExpression) => {
+  if (!cronExpression) return 'No schedule'
 
   try {
     // 简单的下次执行时间计算 - 更新为6字段支持
     const now = new Date()
-    const cronParts = form.periodic_expr.split(' ')
+    const cronParts = cronExpression.split(' ')
 
-    if (cronParts.length !== 6) return 'Invalid cron format (requires 6 fields: second minute hour day month weekday)'
+    if (cronParts.length !== 6) return 'Invalid format'
 
     // 简化版本：只处理一些常见情况
     const [second, minute, hour, day, month, weekday] = cronParts
@@ -741,7 +750,13 @@ const getNextExecutionTime = () => {
       if (nextTime <= now) {
         nextTime.setMinutes(nextTime.getMinutes() + 1, 0, 0)
       }
-      return nextTime.toLocaleString()
+      return nextTime.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
     }
 
     if (minute.startsWith('*/')) {
@@ -752,7 +767,13 @@ const getNextExecutionTime = () => {
       if (nextTime <= now) {
         nextTime.setHours(nextTime.getHours() + 1, 0, parseInt(second) || 0, 0)
       }
-      return nextTime.toLocaleString()
+      return nextTime.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
     }
 
     if (hour.startsWith('*/')) {
@@ -764,7 +785,12 @@ const getNextExecutionTime = () => {
         nextTime.setDate(nextTime.getDate() + 1)
         nextTime.setHours(0, parseInt(minute) || 0, parseInt(second) || 0, 0)
       }
-      return nextTime.toLocaleString()
+      return nextTime.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     }
 
     // 对于固定时间，计算下一次执行
@@ -775,10 +801,19 @@ const getNextExecutionTime = () => {
       nextTime.setDate(nextTime.getDate() + 1)
     }
 
-    return nextTime.toLocaleString()
+    return nextTime.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   } catch (error) {
     return 'Unable to calculate'
   }
+}
+
+const getNextExecutionTime = () => {
+  return calculateNextExecutionTime(form.periodic_expr)
 }
 
 /**
@@ -870,6 +905,32 @@ onMounted(() => {
 .status-text {
   color: #909399;
   font-size: 14px;
+}
+
+.next-execution-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.execution-time {
+  color: #1890ff;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.not-applicable {
+  color: #909399;
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
 }
 
 .action-buttons {
