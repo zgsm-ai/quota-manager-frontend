@@ -619,18 +619,26 @@ const submitForm = async () => {
     await formRef.value.validate()
     submitting.value = true
 
+    const payload = { ...form }
+    if (payload.type === 'single') {
+      delete payload.periodic_expr
+    }
+    if (!payload.model || payload.model.trim() === '') {
+      delete payload.model
+    }
+
     if (isEditing.value) {
-      await strategyApi.updateStrategy(form.id, form)
+      await strategyApi.updateStrategy(form.id, payload)
       ElMessage.success('Strategy updated successfully')
     } else {
-      await strategyApi.createStrategy(form)
+      await strategyApi.createStrategy(payload)
       ElMessage.success('Strategy created successfully')
     }
 
     dialogVisible.value = false
     loadStrategies()
   } catch (error) {
-    if (error !== false) { // 验证失败时返回false
+    if (error !== false) {
       ElMessage.error('Failed to save strategy')
     }
   } finally {
