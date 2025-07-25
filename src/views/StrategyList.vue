@@ -139,7 +139,9 @@
         :rules="formRules"
         label-width="120px"
       >
-        <!-- Name字段已隐藏，将由Title自动生成 -->
+        <el-form-item label="Name" prop="name">
+          <el-input v-model="form.name" placeholder="Enter strategy name" />
+        </el-form-item>
         <el-form-item label="Title" prop="title">
           <el-input v-model="form.title" placeholder="Enter strategy title" />
         </el-form-item>
@@ -410,7 +412,9 @@ const form = reactive({
 
 // 表单验证规则
 const formRules = {
-  // name字段验证已移除，因为它将自动生成
+  name: [
+    { required: true, message: 'Please enter strategy name', trigger: 'blur' }
+  ],
   title: [
     { required: true, message: 'Please enter strategy title', trigger: 'blur' }
   ],
@@ -620,6 +624,7 @@ const submitForm = async () => {
     submitting.value = true
 
     const payload = { ...form }
+
     if (payload.type === 'single') {
       delete payload.periodic_expr
     }
@@ -841,14 +846,6 @@ const generateNameFromTitle = (title) => {
     .replace(/^-+|-+$/g, '')         // 移除首尾的连字符
 }
 
-// 监听title变化，自动生成name
-watch(
-  () => form.title,
-  (newTitle) => {
-    form.name = generateNameFromTitle(newTitle)
-  },
-  { immediate: true }
-)
 
 // 组件挂载时加载数据
 onMounted(() => {
